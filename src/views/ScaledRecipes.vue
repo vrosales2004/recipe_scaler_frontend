@@ -52,14 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { watch, ref } from 'vue'
+import { watch, ref, computed } from 'vue'
 import { useRecipeStore } from '@/stores/recipe'
 import ScaledRecipeDetailsModal from '@/components/ScaledRecipeDetailsModal.vue'
 import type { ScaledRecipe, Recipe } from '@/stores/recipe'
 
 const recipeStore = useRecipeStore()
-const { scaledRecipes, recipes, loading } = storeToRefs(recipeStore)
+// Use computed to avoid deref issues
+const scaledRecipes = computed(() => recipeStore.scaledRecipes)
+const recipes = computed(() => recipeStore.recipes)
+const loading = computed(() => recipeStore.loading)
 
 const detailsModalOpen = ref(false)
 const selectedScaledRecipe = ref<ScaledRecipe | null>(null)

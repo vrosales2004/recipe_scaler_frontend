@@ -101,7 +101,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useRecipeStore } from '@/stores/recipe'
 import type { Recipe, Ingredient } from '@/stores/recipe'
 
@@ -118,8 +117,17 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// Debug what props we receive
+watch(() => props.recipe, (newRecipe) => {
+  console.log('Modal: Recipe prop changed:', newRecipe)
+  console.log('Modal: Recipe ID:', newRecipe?.recipeId)
+  console.log('Modal: Recipe keys:', newRecipe ? Object.keys(newRecipe) : 'No recipe')
+}, { immediate: true })
+
 const recipeStore = useRecipeStore()
-const { loading, error } = storeToRefs(recipeStore)
+// Use computed to avoid deref issues
+const loading = computed(() => recipeStore.loading)
+const error = computed(() => recipeStore.error)
 
 const scalingMethod = ref<'manual' | 'ai'>('manual')
 const targetServings = ref(1)
@@ -138,11 +146,22 @@ const handleScaleRecipe = async () => {
   if (!props.recipe || !targetServings.value) return
 
   console.log('Modal: Recipe being scaled:', props.recipe)
-  console.log('Modal: Recipe ID:', props.recipe.recipeId)
+  console.log('Modal: Recipe ID:', props.recipe?.recipeId)
+  console.log('Modal: Recipe keys:', props.recipe ? Object.keys(props.recipe) : 'No recipe')
+  console.log('Modal: Recipe ID type:', typeof props.recipe?.recipeId)
+  console.log('Modal: Recipe ID value:', JSON.stringify(props.recipe?.recipeId))
+  console.log('Modal: All recipe properties:', Object.entries(props.recipe || {}))
   console.log('Modal: Target servings:', targetServings.value)
   console.log('Modal: Scaling method:', scalingMethod.value)
 
   try {
+    if (!props.recipe?.recipeId) {
+      console.error('Modal: Recipe ID is missing!')
+      console.error('Modal: Recipe object:', props.recipe)
+      console.error('Modal: Recipe ID property:', props.recipe?.recipeId)
+      throw new Error('Recipe ID is missing. Cannot scale recipe.')
+    }
+    
     if (scalingMethod.value === 'manual') {
       await recipeStore.scaleRecipeManually(
         props.recipe.recipeId,

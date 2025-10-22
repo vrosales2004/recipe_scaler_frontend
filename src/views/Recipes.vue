@@ -107,15 +107,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { storeToRefs } from 'pinia'
+import { ref, reactive, computed } from 'vue'
 import { useRecipeStore } from '@/stores/recipe'
 import RecipeScalingModal from '@/components/RecipeScalingModal.vue'
 import RecipeDetailsModal from '@/components/RecipeDetailsModal.vue'
 import type { Recipe, Ingredient } from '@/stores/recipe'
 
 const recipeStore = useRecipeStore()
-const { recipes, loading } = storeToRefs(recipeStore)
+// Use computed to avoid deref issues
+const recipes = computed(() => recipeStore.recipes)
+const loading = computed(() => recipeStore.loading)
 
 const showAddForm = ref(false)
 const detailsModalOpen = ref(false)
@@ -187,7 +188,7 @@ const handleAddRecipe = async () => {
       
       // Check if it's a demo recipe (local fallback)
       const latestRecipe = recipeStore.recipes[recipeStore.recipes.length - 1]
-      const isDemoMode = latestRecipe && latestRecipe.recipeId.startsWith('demo-')
+      const isDemoMode = latestRecipe && latestRecipe.recipeId && latestRecipe.recipeId.startsWith('demo-')
       
       if (isDemoMode) {
         alert('Recipe added successfully! (Demo mode - backend not available)')
@@ -217,6 +218,12 @@ const handleScaleFromDetails = (recipe: Recipe) => {
 }
 
 const openScalingModal = (recipe: Recipe) => {
+  console.log('Recipes: Opening scaling modal for recipe:', recipe)
+  console.log('Recipes: Recipe ID:', recipe.recipeId)
+  console.log('Recipes: Recipe ID type:', typeof recipe.recipeId)
+  console.log('Recipes: Recipe ID value:', JSON.stringify(recipe.recipeId))
+  console.log('Recipes: Recipe keys:', Object.keys(recipe))
+  console.log('Recipes: All recipe properties:', Object.entries(recipe))
   selectedRecipe.value = recipe
   scalingModalOpen.value = true
 }

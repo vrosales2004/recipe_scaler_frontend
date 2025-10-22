@@ -62,8 +62,12 @@ export const useRecipeStore = defineStore('recipe', {
           ...recipeData,
           recipeId: response.recipe
         }
+        console.log('Store: New recipe object:', newRecipe)
+        console.log('Store: New recipe ID:', newRecipe.recipeId)
+        console.log('Store: New recipe ID type:', typeof newRecipe.recipeId)
         this.recipes.push(newRecipe)
         console.log('Store: Recipe added to local state:', newRecipe)
+        console.log('Store: Recipe in store after push:', this.recipes[this.recipes.length - 1])
       } catch (error) {
         console.error('Store: Error in addRecipe:', error)
         
@@ -74,8 +78,12 @@ export const useRecipeStore = defineStore('recipe', {
             ...recipeData,
             recipeId: `demo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
           }
+          console.log('Store: Fallback recipe object:', fallbackRecipe)
+          console.log('Store: Fallback recipe ID:', fallbackRecipe.recipeId)
+          console.log('Store: Fallback recipe ID type:', typeof fallbackRecipe.recipeId)
           this.recipes.push(fallbackRecipe)
           console.log('Store: Recipe added locally:', fallbackRecipe)
+          console.log('Store: Recipe in store after push:', this.recipes[this.recipes.length - 1])
         } else {
           this.error = error instanceof Error ? error.message : 'Failed to add recipe'
         }
@@ -126,10 +134,10 @@ export const useRecipeStore = defineStore('recipe', {
         try {
           const backendRecipe = await recipeApi.getRecipeById({ recipeId: baseRecipeId })
           console.log('Store: Backend recipe found:', backendRecipe)
-          if (backendRecipe.length === 0) {
+          if (!backendRecipe || !Array.isArray(backendRecipe) || backendRecipe.length === 0) {
             throw new Error(`Recipe with ID ${baseRecipeId} not found in backend`)
           }
-        } catch (backendError) {
+        } catch (backendError: any) {
           console.error('Store: Error fetching recipe from backend:', backendError)
           // Check if it's a 500 error (backend issue) or other error
           if (backendError.response?.status === 500) {
@@ -151,9 +159,9 @@ export const useRecipeStore = defineStore('recipe', {
         })
         console.log('Store: Fetched scaled recipe data:', scaledRecipeData)
         console.log("HELLOO", typeof scaledRecipeData)
-        console.log('Store: Scaled recipe data length:', scaledRecipeData.length)
+        console.log('Store: Scaled recipe data length:', scaledRecipeData?.length)
         
-        if (scaledRecipeData.length > 0) {
+        if (scaledRecipeData && Array.isArray(scaledRecipeData) && scaledRecipeData.length > 0) {
           this.scaledRecipes.push(scaledRecipeData[0])
           console.log('Store: Added scaled recipe to state:', scaledRecipeData[0])
           console.log('Store: Total scaled recipes:', this.scaledRecipes.length)
@@ -177,9 +185,9 @@ export const useRecipeStore = defineStore('recipe', {
           console.log('Store: Added fallback scaled recipe to state:', fallbackScaledRecipe)
           console.log('Store: Total scaled recipes:', this.scaledRecipes.length)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Store: Error in scaleRecipeManually:', error)
-        if (error.response?.status === 500) {
+        if (error.response?.status === 500 && localRecipe) {
           console.warn('Store: Backend scaling failed with 500 error, creating fallback scaled recipe')
           
           // Create a fallback scaled recipe using local calculation
@@ -187,7 +195,7 @@ export const useRecipeStore = defineStore('recipe', {
             _id: `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             baseRecipeId: baseRecipeId,
             targetServings: targetServings,
-            scaledIngredients: localRecipe.ingredients.map(ingredient => ({
+            scaledIngredients: localRecipe.ingredients.map((ingredient: any) => ({
               ...ingredient,
               quantity: Number((ingredient.quantity * (targetServings / localRecipe.originalServings)).toFixed(2))
             })),

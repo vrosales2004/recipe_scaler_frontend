@@ -136,14 +136,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { storeToRefs } from 'pinia'
+import { ref, reactive, computed } from 'vue'
 import { useRecipeStore } from '@/stores/recipe'
 import { scalingTipsApi } from '@/services/api'
 import type { ScalingTip } from '@/stores/recipe'
 
 const recipeStore = useRecipeStore()
-const { tips, recipes, loading } = storeToRefs(recipeStore)
+// Use computed to avoid deref issues
+const tips = computed(() => recipeStore.tips)
+const recipes = computed(() => recipeStore.recipes)
+const loading = computed(() => recipeStore.loading)
 
 const showAddTipForm = ref(false)
 const tipGenerationMethod = ref<'manual' | 'ai'>('manual')
@@ -229,14 +231,14 @@ const generateAITips = async () => {
               })
               
               if (tipData.length > 0) {
-                const aiTip: ScalingTip = {
-                  tipId: tipData[0]._id,
-                  cookingMethod: tipData[0].cookingMethod,
-                  direction: tipData[0].direction,
-                  content: tipData[0].text,
-                  addedBy: newTip.addedBy,
-                  relatedRecipeId: tipData[0].relatedRecipeId || selectedRecipe.recipeId
-                }
+        const aiTip: ScalingTip = {
+          tipId: tipData[0]._id,
+          cookingMethod: tipData[0].cookingMethod,
+          direction: tipData[0].direction as 'up' | 'down',
+          content: tipData[0].text,
+          addedBy: newTip.addedBy,
+          relatedRecipeId: tipData[0].relatedRecipeId || selectedRecipe.recipeId
+        }
                 
                 recipeStore.tips.push(aiTip)
                 console.log('AI tip added to store:', aiTip)
