@@ -5,6 +5,8 @@ A modern Vue.js frontend application for the Recipe Scaler API, built with Vite,
 ## User Journey
 A user logs into the Recipe Application to manage their personal recipe collection. They start by adding a new recipe given to them by their family, "Home Made Lasagna," including the ingredients, cooking methods, and the original serving size. Later, they decide to scale the recipe to serve a larger group for a work event. Using the app's scaling feature to adjust the ingredient quantities for 12 servings. The app automatically saves the scaled version, and the user can view it alongside the original recipe. While exploring the app, they discover scaling tips for lasagna, such as adjusting baking times for larger portions, and decide to add their own tip about layering techniques. Finally, the user removes an outdated recipe from their collection and refreshes their scaled recipes to ensure everything is up-to-date. Throughout, the app provides a seamless experience, with clear feedback and error handling for any issues.
 
+[Video of User Journey](./User_Journey_RecipeScaler.mov)
+
 ## Features
 
 - **Modern Vue.js 3** with Composition API
