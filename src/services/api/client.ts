@@ -20,6 +20,7 @@ import type {
   RequestTipGenerationResponse,
   RemoveScalingTipRequest,
   GetScalingTipsRequest,
+  GetScalingTipByIdRequest,
   TipDocOutput,
   UserRegisterRequest,
   UserRegisterResponse,
@@ -190,6 +191,14 @@ export class ApiClient {
     return response.data;
   }
 
+  async getScalingTipById(request: GetScalingTipByIdRequest): Promise<TipDocOutput> {
+    const response: AxiosResponse<TipDocOutput> = await this.client.post(
+      '/api/ScalingTips/_getScalingTipById',
+      request
+    );
+    return response.data;
+  }
+
   // UserAuthentication endpoints
   async registerUser(request: UserRegisterRequest): Promise<UserRegisterResponse> {
     const response: AxiosResponse<UserRegisterResponse> = await this.client.post(
@@ -325,6 +334,10 @@ export class ScalingTipsApi {
 
   async getScalingTips(request: GetScalingTipsRequest): Promise<TipDocOutput[]> {
     return this.client.getScalingTips(request);
+  }
+
+  async getScalingTipById(request: GetScalingTipByIdRequest): Promise<TipDocOutput> {
+    return this.client.getScalingTipById(request);
   }
 }
 

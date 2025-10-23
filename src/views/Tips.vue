@@ -31,27 +31,62 @@
       </div>
 
       <form @submit.prevent="handleAddTip">
-        <div class="form-group">
-          <label for="cookingMethod">Cooking Method</label>
-          <select v-model="newTip.cookingMethod" id="cookingMethod" required>
-            <option value="">Select a cooking method</option>
-            <option v-for="method in availableMethods" :key="method" :value="method">
-              {{ method }}
-            </option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="direction">Scaling Direction</label>
-          <select v-model="newTip.direction" id="direction" required>
-            <option value="">Select direction</option>
-            <option value="up">Scale Up</option>
-            <option value="down">Scale Down</option>
-          </select>
+        <!-- AI Generation Fields -->
+        <div v-if="tipGenerationMethod === 'ai'" class="ai-fields">
+          <div class="ai-info">
+            <h4>AI Tip Generation</h4>
+            <p>Generate AI tips based on a specific scaled recipe and cooking method.</p>
+            <p><strong>Note:</strong> AI-generated tips will automatically be attributed to "AI".</p>
+          </div>
+          
+          <!-- Tip Generation Options -->
+          <div class="tip-generation-options">
+            <div class="option-group">
+              <h5>Generate tips for a specific scaled recipe</h5>
+              <div class="form-group">
+                <label for="relatedRecipeId">Select Scaled Recipe</label>
+                <select v-model="newTip.relatedRecipeId" id="relatedRecipeId" @change="onScaledRecipeChange">
+                  <option value="">Choose a scaled recipe...</option>
+                  <option v-for="scaledRecipe in scaledRecipes" :key="scaledRecipe._id" :value="scaledRecipe._id">
+                    {{ getScaledRecipeName(scaledRecipe) }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="scaledRecipeCookingMethod">Cooking Method</label>
+                <select v-model="newTip.cookingMethod" id="scaledRecipeCookingMethod" @change="onScaledRecipeChange">
+                  <option value="">Select a cooking method</option>
+                  <option v-for="method in availableMethods" :key="method" :value="method">
+                    {{ method }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Manual Entry Fields -->
         <div v-if="tipGenerationMethod === 'manual'" class="manual-fields">
+          <div class="form-group">
+            <label for="manualCookingMethod">Cooking Method</label>
+            <select v-model="newTip.cookingMethod" id="manualCookingMethod" required>
+              <option value="">Select a cooking method</option>
+              <option v-for="method in availableMethods" :key="method" :value="method">
+                {{ method }}
+              </option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="manualDirection">Scaling Direction</label>
+            <select v-model="newTip.direction" id="manualDirection" required>
+              <option value="">Select direction</option>
+              <option value="up">Scale Up</option>
+              <option value="down">Scale Down</option>
+            </select>
+          </div>
+          
           <div class="form-group">
             <label for="content">Tip Content</label>
             <textarea 
@@ -69,31 +104,8 @@
           </div>
         </div>
 
-        <!-- AI Generation Fields -->
-        <div v-if="tipGenerationMethod === 'ai'" class="ai-fields">
-          <div class="ai-info">
-            <h4>AI Tip Generation</h4>
-            <p>Our AI will generate scaling tips based on the cooking method, scaling direction, and optionally a specific recipe.</p>
-          </div>
-          
-          <div class="form-group">
-            <label for="aiAddedBy">Added By</label>
-            <input v-model="newTip.addedBy" type="text" id="aiAddedBy" required />
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="relatedRecipeId">Related Recipe (Optional)</label>
-          <select v-model="newTip.relatedRecipeId" id="relatedRecipeId">
-            <option value="">No specific recipe</option>
-            <option v-for="recipe in recipes" :key="recipe.recipeId" :value="recipe.recipeId">
-              {{ recipe.name }}
-            </option>
-          </select>
-        </div>
-
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" :disabled="loading">
+          <button type="submit" class="btn btn-primary" :disabled="loading || !isFormValid">
             {{ loading ? 'Adding...' : 'Add Tip' }}
           </button>
         </div>
@@ -145,6 +157,7 @@ const recipeStore = useRecipeStore()
 // Use computed to avoid deref issues
 const tips = computed(() => recipeStore.tips)
 const recipes = computed(() => recipeStore.recipes)
+const scaledRecipes = computed(() => recipeStore.scaledRecipes)
 const loading = computed(() => recipeStore.loading)
 
 const showAddTipForm = ref(false)
@@ -160,9 +173,44 @@ const newTip = reactive({
 })
 
 const getRecipeName = (recipeId: string): string => {
+  // First try to find as original recipe
   const recipe = recipes.value.find(r => r.recipeId === recipeId)
-  return recipe ? recipe.name : 'Unknown Recipe'
+  if (recipe) return recipe.name
+  
+  // Then try to find as scaled recipe
+  const scaledRecipe = scaledRecipes.value.find(sr => sr._id === recipeId)
+  if (scaledRecipe) {
+    const baseRecipe = recipes.value.find(r => r.recipeId === scaledRecipe.baseRecipeId)
+    if (baseRecipe) {
+      return `${baseRecipe.name} (${baseRecipe.originalServings} → ${scaledRecipe.targetServings} servings)`
+    }
+  }
+  
+  return 'Unknown Recipe'
 }
+
+const getScaledRecipeName = (scaledRecipe: any): string => {
+  const baseRecipe = recipes.value.find(r => r.recipeId === scaledRecipe.baseRecipeId)
+  if (!baseRecipe) return 'Unknown Recipe'
+  
+  const scalingDirection = scaledRecipe.targetServings > baseRecipe.originalServings ? 'up' : 'down'
+  return `${baseRecipe.name} (${baseRecipe.originalServings} → ${scaledRecipe.targetServings} servings, scaled ${scalingDirection})`
+}
+
+// Event handlers for form changes
+const onScaledRecipeChange = () => {
+  // No need to clear anything since we only have one option now
+}
+
+// Form validation
+const isFormValid = computed(() => {
+  if (tipGenerationMethod.value === 'manual') {
+    return newTip.content && newTip.addedBy && newTip.cookingMethod && newTip.direction
+  } else {
+    // For AI generation, both scaled recipe and cooking method must be selected
+    return !!newTip.relatedRecipeId && !!newTip.cookingMethod
+  }
+})
 
 const handleAddTip = async () => {
   console.log('Adding tip:', newTip)
@@ -172,6 +220,7 @@ const handleAddTip = async () => {
     const tip: ScalingTip = {
       ...newTip,
       tipId: Date.now().toString(),
+      direction: newTip.direction as 'up' | 'down',
       relatedRecipeId: newTip.relatedRecipeId || undefined
     }
     
@@ -197,23 +246,35 @@ const generateAITips = async () => {
   try {
     console.log('Generating AI tips...')
     
-    // Find the selected recipe if one is chosen
-    const selectedRecipe = newTip.relatedRecipeId 
-      ? recipes.value.find(r => r.recipeId === newTip.relatedRecipeId)
+    // Find the selected scaled recipe if one is chosen
+    const selectedScaledRecipe = newTip.relatedRecipeId 
+      ? scaledRecipes.value.find(sr => sr._id === newTip.relatedRecipeId)
       : null
     
-    if (selectedRecipe) {
-      // Generate tips for a specific recipe
-      const recipeContext = {
-        recipeId: selectedRecipe.recipeId,
-        name: selectedRecipe.name,
-        originalServings: selectedRecipe.originalServings,
-        targetServings: newTip.direction === 'up' ? selectedRecipe.originalServings * 2 : selectedRecipe.originalServings / 2,
-        ingredients: selectedRecipe.ingredients,
-        cookingMethods: selectedRecipe.cookingMethods
+    if (selectedScaledRecipe) {
+      // Find the base recipe for context
+      const baseRecipe = recipes.value.find(r => r.recipeId === selectedScaledRecipe.baseRecipeId)
+      if (!baseRecipe) {
+        throw new Error('Base recipe not found for selected scaled recipe')
       }
       
-      console.log('Generating AI tips for recipe:', recipeContext)
+      // Calculate scaling direction from the scaled recipe
+      const scalingDirection = selectedScaledRecipe.targetServings > baseRecipe.originalServings ? 'up' : 'down'
+      
+      // Generate tips for a specific scaled recipe
+      const recipeContext = {
+        recipeId: baseRecipe.recipeId,
+        name: baseRecipe.name,
+        originalServings: baseRecipe.originalServings,
+        targetServings: selectedScaledRecipe.targetServings,
+        ingredients: baseRecipe.ingredients,
+        cookingMethods: baseRecipe.cookingMethods
+      }
+      
+      console.log('Generating AI tips for scaled recipe:', recipeContext)
+      console.log('Calculated scaling direction:', scalingDirection)
+      console.log('Original servings:', baseRecipe.originalServings)
+      console.log('Target servings:', selectedScaledRecipe.targetServings)
       
       try {
         // Call the AI tip generation API
@@ -221,30 +282,39 @@ const generateAITips = async () => {
         console.log('AI tip generation response:', response)
         
         if (response.tipIds && response.tipIds.length > 0) {
-          // Fetch the generated tips and add them to the store
+          // Fetch the actual tip content using the returned tip IDs
+          console.log('Using generated tip IDs:', response.tipIds)
+          
+          // Fetch each tip by ID to get the actual generated content
           for (const tipId of response.tipIds) {
             try {
-              const tipData = await scalingTipsApi.getScalingTips({
-                cookingMethod: newTip.cookingMethod,
-                direction: newTip.direction as 'up' | 'down',
-                relatedRecipeId: selectedRecipe.recipeId
-              })
+              const tipData = await scalingTipsApi.getScalingTipById({ tipId })
+              console.log('Fetched tip data for ID:', tipId, tipData)
               
-              if (tipData.length > 0) {
-        const aiTip: ScalingTip = {
-          tipId: tipData[0]._id,
-          cookingMethod: tipData[0].cookingMethod,
-          direction: tipData[0].direction as 'up' | 'down',
-          content: tipData[0].text,
-          addedBy: newTip.addedBy,
-          relatedRecipeId: tipData[0].relatedRecipeId || selectedRecipe.recipeId
-        }
-                
-                recipeStore.tips.push(aiTip)
-                console.log('AI tip added to store:', aiTip)
+              const aiTip: ScalingTip = {
+                tipId: tipData._id,
+                cookingMethod: tipData.cookingMethod,
+                direction: tipData.direction as 'up' | 'down',
+                content: tipData.text, // Use the actual generated text
+                addedBy: 'AI',
+                relatedRecipeId: tipData.relatedRecipeId || selectedScaledRecipe._id
               }
+              
+              recipeStore.tips.push(aiTip)
+              console.log('AI tip added to store:', aiTip)
             } catch (fetchError) {
-              console.warn('Failed to fetch generated tip:', fetchError)
+              console.warn('Failed to fetch tip by ID:', tipId, fetchError)
+              // Create a fallback tip if fetching fails
+              const fallbackTip: ScalingTip = {
+                tipId: tipId,
+                cookingMethod: newTip.cookingMethod,
+                direction: scalingDirection as 'up' | 'down',
+                content: `AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). This tip was generated by AI based on the specific recipe context.`,
+                addedBy: 'AI',
+                relatedRecipeId: selectedScaledRecipe._id
+              }
+              recipeStore.tips.push(fallbackTip)
+              console.log('Fallback tip added to store:', fallbackTip)
             }
           }
         } else {
@@ -254,34 +324,25 @@ const generateAITips = async () => {
         console.warn('AI tip generation failed, creating fallback tip:', apiError)
         
         // Fallback: Create a placeholder AI-generated tip
+        const scalingAdvice = scalingDirection === 'up' 
+          ? 'Consider increasing cooking times and temperatures when scaling up recipes.'
+          : 'Consider reducing cooking times and temperatures when scaling down recipes.'
+        
         const fallbackTip: ScalingTip = {
           tipId: `ai-fallback-${Date.now()}`,
           cookingMethod: newTip.cookingMethod,
-          direction: newTip.direction as 'up' | 'down',
-          content: `AI-generated tip for ${newTip.cookingMethod} when scaling ${newTip.direction} for ${selectedRecipe.name}. Consider adjusting cooking times and temperatures when scaling recipes.`,
-          addedBy: newTip.addedBy,
-          relatedRecipeId: selectedRecipe.recipeId
+          direction: scalingDirection as 'up' | 'down',
+          content: `AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). ${scalingAdvice}`,
+          addedBy: 'AI',
+          relatedRecipeId: selectedScaledRecipe._id
         }
         
         recipeStore.tips.push(fallbackTip)
         console.log('Fallback AI tip added to store:', fallbackTip)
       }
     } else {
-      // Generate general tips for cooking method and direction
-      console.log('Generating general AI tips for:', newTip.cookingMethod, newTip.direction)
-      
-      // For general tips, create a fallback since we don't have a specific recipe context
-      const generalTip: ScalingTip = {
-        tipId: `ai-general-${Date.now()}`,
-        cookingMethod: newTip.cookingMethod,
-        direction: newTip.direction as 'up' | 'down',
-        content: `AI-generated general tip for ${newTip.cookingMethod} when scaling ${newTip.direction}. When scaling recipes, consider adjusting cooking times, temperatures, and ingredient ratios accordingly.`,
-        addedBy: newTip.addedBy,
-        relatedRecipeId: undefined
-      }
-      
-      recipeStore.tips.push(generalTip)
-      console.log('General AI tip added to store:', generalTip)
+      // No scaled recipe selected - this should not happen due to form validation
+      throw new Error('No scaled recipe selected. Please select a scaled recipe to generate AI tips.')
     }
     
     console.log('Total tips in store:', recipeStore.tips.length)
@@ -384,6 +445,25 @@ const removeTip = async (tipId: string) => {
   color: #7f8c8d;
   font-size: 0.9rem;
 }
+
+.tip-generation-options {
+  margin-top: 1rem;
+}
+
+.option-group {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+}
+
+.option-group h5 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
 
 .form-group {
   margin-bottom: 1.5rem;

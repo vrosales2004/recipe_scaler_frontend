@@ -128,6 +128,10 @@ export interface GetScalingTipsRequest {
   relatedRecipeId?: string | null;
 }
 
+export interface GetScalingTipByIdRequest {
+  tipId: string;
+}
+
 export interface TipDocOutput {
   _id: string;
   text: string;
