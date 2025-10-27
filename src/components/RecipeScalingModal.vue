@@ -275,14 +275,14 @@ const handleScaleRecipe = async () => {
 }
 
 .method-btn.active {
-  border-color: #3498db;
-  background-color: #3498db;
+  border-color: #84994F; /* Method Button Active Border */
+  background-color: #84994F; /* Method Button Active Background */
   color: white;
 }
 
 .method-btn:hover:not(.active) {
-  border-color: #3498db;
-  color: #3498db;
+  border-color: #84994F; /* Method Button Inactive Hover Border */
+  color: #84994F; /* Method Button Inactive Hover Text */
 }
 
 .form-group {
@@ -361,7 +361,7 @@ const handleScaleRecipe = async () => {
 
 .scaling-info p:last-child {
   font-weight: 500;
-  color: #3498db;
+  color: #7f1c00;
 }
 
 .ingredient-row {
@@ -489,12 +489,12 @@ const handleScaleRecipe = async () => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #2980b9;
+  background-color: #606f39;
 }
 
 .btn-secondary {

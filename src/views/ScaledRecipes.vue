@@ -138,7 +138,7 @@ const removeScaledRecipe = async (scaledRecipeId: string) => {
 }
 
 .scaling-method {
-  background-color: #3498db;
+  background-color: #7f1c00;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -184,7 +184,7 @@ const removeScaledRecipe = async (scaledRecipeId: string) => {
 
 .quantity {
   font-weight: 600;
-  color: #3498db;
+  color: #7f1c00;
   min-width: 3rem;
 }
 
@@ -221,7 +221,7 @@ const removeScaledRecipe = async (scaledRecipeId: string) => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F;
   color: white;
 }
 

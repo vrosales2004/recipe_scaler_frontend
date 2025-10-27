@@ -93,7 +93,7 @@ const handleScaleRecipe = () => {
 }
 
 .modal-content {
-  background: white;
+  background: white; /* Recipe Details Modal Background */
   border-radius: 8px;
   width: 90%;
   max-width: 600px;
@@ -199,7 +199,7 @@ const handleScaleRecipe = () => {
 
 .quantity {
   font-weight: 600;
-  color: #3498db;
+  color: #7f1c00;
   min-width: 3rem;
 }
 
@@ -236,12 +236,12 @@ const handleScaleRecipe = () => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #2980b9;
+  background-color: #b92946;
 }
 
 .btn-secondary {

@@ -63,9 +63,9 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: #2c3e50;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background-color: #7f1c00; /* NavBar Background */
+  color: white; /* NavBar Text */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* NavBar Shadow */
 }
 
 .nav-brand h1 {
@@ -80,7 +80,7 @@ onMounted(async () => {
 }
 
 .nav-link {
-  color: white;
+  color: white; /* Nav Link Text */
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
@@ -88,11 +88,11 @@ onMounted(async () => {
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.223); /* Nav Link Hover Background */
 }
 
 .nav-link.router-link-active {
-  background-color: #3498db;
+  background-color: #84994F; /* Active Nav Link Background */
 }
 
 .nav-auth {

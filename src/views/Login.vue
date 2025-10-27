@@ -192,7 +192,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #fff7de;
   padding: 2rem;
 }
 
@@ -264,12 +264,12 @@ onMounted(async () => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #2980b9;
+  background-color: #606f39;
 }
 
 .btn-secondary {
@@ -292,7 +292,7 @@ onMounted(async () => {
 }
 
 .link {
-  color: #3498db;
+  color: #84994F;
   text-decoration: none;
   font-weight: 500;
 }

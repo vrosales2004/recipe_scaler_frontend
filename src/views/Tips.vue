@@ -379,7 +379,7 @@ const removeTip = async (tipId: string) => {
 }
 
 .add-tip-form {
-  background-color: #f8f9fa;
+  background-color: #f2e9c8;
   padding: 2rem;
   border-radius: 8px;
   margin-bottom: 2rem;
@@ -413,14 +413,14 @@ const removeTip = async (tipId: string) => {
 }
 
 .method-btn.active {
-  border-color: #3498db;
-  background-color: #3498db;
+  border-color: #84994F;
+  background-color: #84994F;
   color: white;
 }
 
 .method-btn:hover:not(.active) {
-  border-color: #3498db;
-  color: #3498db;
+  border-color: #84994F;
+  color: #84994F;
 }
 
 .manual-fields, .ai-fields {
@@ -428,11 +428,11 @@ const removeTip = async (tipId: string) => {
 }
 
 .ai-info {
-  background-color: #e8f4fd;
+  background-color: #71392a1e;
   padding: 1rem;
   border-radius: 6px;
   margin-bottom: 1.5rem;
-  border-left: 4px solid #3498db;
+  border-left: 4px solid #7f1c00;
 }
 
 .ai-info h4 {
@@ -574,7 +574,7 @@ const removeTip = async (tipId: string) => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F;
   color: white;
 }
 

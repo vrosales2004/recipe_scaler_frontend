@@ -171,7 +171,7 @@ const closeModal = () => {
 }
 
 .scaling-method {
-  background-color: #3498db;
+  background-color: #7f1c00;
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -224,7 +224,7 @@ const closeModal = () => {
 
 .quantity {
   font-weight: 600;
-  color: #3498db;
+  color: #7f1c00;
   min-width: 3rem;
 }
 

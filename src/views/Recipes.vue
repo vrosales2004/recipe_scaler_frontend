@@ -281,7 +281,7 @@ const removeRecipe = async (recipeId: string) => {
 }
 
 .add-recipe-form {
-  background-color: #f8f9fa;
+  background-color: #f2e9c8; /* Add Recipe Form Background */
   padding: 2rem;
   border-radius: 8px;
   margin-bottom: 2rem;
@@ -358,7 +358,7 @@ const removeRecipe = async (recipeId: string) => {
 }
 
 .servings {
-  color: #3498db;
+  color: #7f1c00;
   font-weight: 500;
   margin-bottom: 1rem;
 }
@@ -393,7 +393,7 @@ const removeRecipe = async (recipeId: string) => {
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: #84994F; /* Add Recipe Button Background */
   color: white;
 }
 
