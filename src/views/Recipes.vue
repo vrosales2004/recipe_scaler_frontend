@@ -56,9 +56,6 @@
           <button type="submit" class="btn btn-primary" :disabled="loading">
             {{ loading ? 'Adding...' : 'Add Recipe' }}
           </button>
-          <button type="button" @click="testForm" class="btn btn-secondary">
-            Test Form Data
-          </button>
         </div>
       </form>
     </div>
@@ -238,27 +235,6 @@ const handleRecipeScaled = (scaledRecipeId: string) => {
   // Optionally navigate to scaled recipes page or show success message
 }
 
-const testForm = () => {
-  console.log('Form data:', {
-    name: newRecipe.name,
-    author: newRecipe.author,
-    originalServings: newRecipe.originalServings,
-    cookingMethods: newRecipe.cookingMethods,
-    ingredients: newRecipe.ingredients
-  })
-  
-  // Fill with test data
-  newRecipe.name = 'Test Recipe'
-  newRecipe.author = 'Test Author'
-  newRecipe.originalServings = 4
-  newRecipe.cookingMethods = ['baking']
-  newRecipe.ingredients = [
-    { name: 'flour', quantity: 2, unit: 'cups', preparation: 'sifted' },
-    { name: 'sugar', quantity: 1, unit: 'cup', preparation: '' }
-  ]
-  
-  console.log('Form filled with test data')
-}
 
 const removeRecipe = async (recipeId: string) => {
   if (confirm('Are you sure you want to remove this recipe?')) {
