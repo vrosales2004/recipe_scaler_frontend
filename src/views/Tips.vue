@@ -285,6 +285,9 @@ const generateAITips = async () => {
           // Fetch the actual tip content using the returned tip IDs
           console.log('Using generated tip IDs:', response.tipIds)
           
+          // Track unique tips to avoid duplicates
+          const uniqueTips = new Map<string, ScalingTip>()
+          
           // Fetch each tip by ID to get the actual generated content
           for (const tipId of response.tipIds) {
             try {
@@ -300,8 +303,14 @@ const generateAITips = async () => {
                 relatedRecipeId: tipData.relatedRecipeId || selectedScaledRecipe._id
               }
               
-              recipeStore.tips.push(aiTip)
-              console.log('AI tip added to store:', aiTip)
+              // Use content as key to avoid duplicates (same content, different cooking methods)
+              const contentKey = aiTip.content.toLowerCase().trim()
+              if (!uniqueTips.has(contentKey)) {
+                uniqueTips.set(contentKey, aiTip)
+                console.log('AI tip added to unique collection:', aiTip)
+              } else {
+                console.log('Skipping duplicate tip with content:', contentKey)
+              }
             } catch (fetchError) {
               console.warn('Failed to fetch tip by ID:', tipId, fetchError)
               // Create a fallback tip if fetching fails
@@ -313,9 +322,22 @@ const generateAITips = async () => {
                 addedBy: 'AI',
                 relatedRecipeId: selectedScaledRecipe._id
               }
-              recipeStore.tips.push(fallbackTip)
-              console.log('Fallback tip added to store:', fallbackTip)
+              
+              // Check for duplicates in fallback tips too
+              const contentKey = fallbackTip.content.toLowerCase().trim()
+              if (!uniqueTips.has(contentKey)) {
+                uniqueTips.set(contentKey, fallbackTip)
+                console.log('Fallback tip added to unique collection:', fallbackTip)
+              } else {
+                console.log('Skipping duplicate fallback tip with content:', contentKey)
+              }
             }
+          }
+          
+          // Add all unique tips to the store
+          for (const tip of uniqueTips.values()) {
+            recipeStore.tips.push(tip)
+            console.log('Unique AI tip added to store:', tip)
           }
         } else {
           throw new Error('No tips were generated')

@@ -54,6 +54,18 @@
               </div>
             </div>
           </div>
+          
+          <div class="original-ingredients-section">
+            <h4>Original Ingredients</h4>
+            <div class="ingredients-list">
+              <div v-for="ingredient in baseRecipe.ingredients" :key="`${ingredient.name}-${ingredient.quantity}`" class="ingredient-item">
+                <span class="quantity">{{ ingredient.quantity }}</span>
+                <span class="unit">{{ ingredient.unit }}</span>
+                <span class="name">{{ ingredient.name }}</span>
+                <span v-if="ingredient.preparation" class="preparation">({{ ingredient.preparation }})</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -247,6 +259,17 @@ const closeModal = () => {
   background-color: #f8f9fa;
   border-radius: 6px;
   padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.original-ingredients-section {
+  margin-top: 1rem;
+}
+
+.original-ingredients-section h4 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
 }
 
 .modal-footer {
