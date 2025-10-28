@@ -2,8 +2,20 @@
 
 A modern Vue.js frontend application for the Recipe Scaler API, built with Vite, TypeScript, Vue Router, and Pinia.
 
-## User Journey
-A user logs into the Recipe Application to manage their personal recipe collection. They start by adding a new recipe given to them by their family, "Home Made Lasagna," including the ingredients, cooking methods, and the original serving size. Later, they decide to scale the recipe to serve a larger group for a work event. Using the app's scaling feature to adjust the ingredient quantities for 12 servings. The app automatically saves the scaled version, and the user can view it alongside the original recipe. While exploring the app, they discover scaling tips for lasagna, such as adjusting baking times for larger portions, and decide to add their own tip about layering techniques. Finally, the user removes an outdated recipe from their collection and refreshes their scaled recipes to ensure everything is up-to-date. Throughout, the app provides a seamless experience, with clear feedback and error handling for any issues.
+## Example User Journey
+A new user signs up for the Recipe Scaler and logs in to explore its features. They start by browsing the app's collection of scaling tips and discover AI-generated advice for bread recipes. Intrigued, they add their own family recipe, "Artisan Sourdough Bread," including the ingredients, cooking methods, and original serving size. Instead of manually scaling the recipe, they use the AI scaling feature to adjust the recipe for 3 loaves instead of 1. The AI scales each ingredient quantity while taking into account ingredients that shouldn't be scaled exactly linearly like yeast or salt. The user saves the scaled recipe and views it alongside the original. They also explore AI-generated tips for bread baking, such as "use a Dutch oven for better crust development" and "allow the dough to rest for 30 minutes after mixing for better gluten formation." Impressed by the AI's insights, they add their own tip about using a steam tray in the oven for a crispier crust. Finally, the user logs out, confident that their recipes and tips are securely saved for the next time they want to bake some sourdough!
+
+#### Ingredients:
+1. **Bread Flour** - 500g  
+   *Scales linearly to maintain hydration ratio.*
+2. **Water** - 350g  
+   *Scales linearly to maintain hydration ratio.*
+3. **Salt** - 10g  
+   *Scaled slightly downward for larger batches to avoid over-salting.*
+4. **Sourdough Starter** - 100g  
+   *Scaled linearly, but adjustments may be needed based on starter activity.*
+5. **Yeast (optional)** - 2g  
+   *Scaled non-linearly, as too much yeast can cause over-proofing.*
 
 [Video of User Journey](./User_Journey_RecipeScaler.mov)
 

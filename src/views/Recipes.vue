@@ -16,10 +16,6 @@
           <input v-model="newRecipe.name" type="text" id="name" required />
         </div>
         
-        <div class="form-group">
-          <label for="author">Author</label>
-          <input v-model="newRecipe.author" type="text" id="author" required />
-        </div>
         
         <div class="form-group">
           <label for="servings">Original Servings</label>
@@ -143,13 +139,17 @@ const removeIngredient = (index: number) => {
 }
 
 const handleAddRecipe = async () => {
+  // Get current user from auth store
+  const { useAuthStore } = await import('@/stores/auth')
+  const authStore = useAuthStore()
+  const currentUsername = authStore.user?.username || 'Unknown'
+  
+  // Set the author to the current user
+  newRecipe.author = currentUsername
+  
   // Basic validation
   if (!newRecipe.name.trim()) {
     alert('Please enter a recipe name')
-    return
-  }
-  if (!newRecipe.author.trim()) {
-    alert('Please enter an author')
     return
   }
   if (newRecipe.originalServings <= 0) {
@@ -177,7 +177,6 @@ const handleAddRecipe = async () => {
       console.log('Recipe added successfully')
       // Reset form
       newRecipe.name = ''
-      newRecipe.author = ''
       newRecipe.originalServings = 1
       newRecipe.cookingMethods = []
       newRecipe.ingredients = []
