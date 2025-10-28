@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { userAuthenticationApi } from '@/services/api'
+import { useRecipeStore } from './recipe'
 import type { 
   UserLoginRequest, 
   UserRegisterRequest, 
@@ -82,6 +83,10 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('username', userResponse[0].username)
           
           console.log('Auth: User logged in successfully:', this.user)
+          
+          // Load user-specific data
+          const recipeStore = useRecipeStore()
+          await recipeStore.loadUserData()
         } else {
           // Fallback: Use the username from login response if user lookup fails
           console.warn('Auth: User lookup failed, using fallback user data')
@@ -97,6 +102,10 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('username', credentials.username)
           
           console.log('Auth: User logged in with fallback data:', this.user)
+          
+          // Load user-specific data
+          const recipeStore = useRecipeStore()
+          await recipeStore.loadUserData()
         }
       } catch (error: any) {
         console.error('Auth: Login error:', error)
@@ -155,8 +164,12 @@ export const useAuthStore = defineStore('auth', {
         localStorage.removeItem('userId')
         localStorage.removeItem('username')
         
+        // Clear recipe data
+        const recipeStore = useRecipeStore()
+        recipeStore.clearAllData()
+        
         this.loading = false
-        console.log('Auth: User logged out')
+        console.log('Auth: User logged out and recipe data cleared')
       }
     },
 
@@ -190,6 +203,11 @@ export const useAuthStore = defineStore('auth', {
             }
             this.isAuthenticated = true
             console.log('Auth: Session restored successfully')
+            
+            // Load user-specific data
+            const recipeStore = useRecipeStore()
+            await recipeStore.loadUserData()
+            
             return true
           } else {
             console.log('Auth: Session expired')
@@ -209,6 +227,11 @@ export const useAuthStore = defineStore('auth', {
           username: storedUsername
         }
         this.isAuthenticated = true
+        
+        // Load user-specific data
+        const recipeStore = useRecipeStore()
+        await recipeStore.loadUserData()
+        
         return true
       } finally {
         this.loading = false
@@ -224,6 +247,10 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('sessionId')
       localStorage.removeItem('userId')
       localStorage.removeItem('username')
+      
+      // Clear recipe data
+      const recipeStore = useRecipeStore()
+      recipeStore.clearAllData()
     },
 
     clearError() {

@@ -113,9 +113,10 @@ export const useRecipeStore = defineStore('recipe', {
       this.loading = true
       this.error = null
       
+      // First, let's verify the recipe exists in our local state
+      const localRecipe = this.recipes.find(r => r.recipeId === baseRecipeId)
+      
       try {
-        // First, let's verify the recipe exists in our local state
-        const localRecipe = this.recipes.find(r => r.recipeId === baseRecipeId)
         console.log('Store: Local recipe found:', localRecipe)
         
         if (!localRecipe) {
@@ -287,6 +288,68 @@ export const useRecipeStore = defineStore('recipe', {
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to find scaled recipes'
         return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Clear all data (used when logging out)
+    clearAllData() {
+      this.recipes = []
+      this.scaledRecipes = []
+      this.tips = []
+      this.error = null
+      console.log('Store: All recipe data cleared')
+    },
+
+    // Load user-specific data (used when logging in or restoring a session)
+    async loadUserData() {
+      this.loading = true
+      this.error = null
+      
+      try {
+        console.log('Store: Loading user-specific data')
+        // Get current user from auth store
+        const { useAuthStore } = await import('./auth')
+        const authStore = useAuthStore()
+        const username = authStore.user?.username
+        if (!username) {
+          console.warn('Store: No username found; skipping load')
+          this.clearAllData()
+          return
+        }
+
+        // 1) Load recipes for this author
+        const recipeDocs = await recipeApi.getRecipesByAuthor({ author: username })
+        this.recipes = (recipeDocs || []).map(doc => ({
+          recipeId: doc._id,
+          author: doc.author,
+          name: doc.name,
+          originalServings: doc.originalServings,
+          ingredients: doc.ingredients,
+          cookingMethods: doc.cookingMethods
+        }))
+        console.log(`Store: Loaded ${this.recipes.length} recipes for`, username)
+
+        // 2) Load scaled recipes for each base recipe
+        const allScaled: ScaledRecipe[] = []
+        for (const r of this.recipes) {
+          try {
+            const scaledForBase = await recipeScalerApi.getScaledRecipesByBaseRecipe({ baseRecipeId: r.recipeId })
+            if (Array.isArray(scaledForBase) && scaledForBase.length > 0) {
+              allScaled.push(...scaledForBase)
+            }
+          } catch (e) {
+            console.warn('Store: Failed to load scaled recipes for base', r.recipeId, e)
+          }
+        }
+        this.scaledRecipes = allScaled
+        console.log('Store: Loaded scaled recipes count:', this.scaledRecipes.length)
+
+        // Optionally, clear tips or leave as-is; for now keep existing tips
+      } catch (error: any) {
+        console.error('Store: Error loading user data:', error)
+        this.error = error.message || 'Failed to load user data'
       } finally {
         this.loading = false
       }
