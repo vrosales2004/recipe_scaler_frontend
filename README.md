@@ -7,6 +7,9 @@ A new user signs up for the Recipe Scaler and logs in to explore its features. T
 
 [Video of User Journey](./Recipe_Scaler_Final.mov)
 
+## Visual Design Study
+[Click Here](./Visual_Design_Study.pdf)
+
 ## Features
 
 - **Modern Vue.js 3** with Composition API
