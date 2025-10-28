@@ -98,10 +98,6 @@
             ></textarea>
           </div>
           
-          <div class="form-group">
-            <label for="addedBy">Added By</label>
-            <input v-model="newTip.addedBy" type="text" id="addedBy" required />
-          </div>
         </div>
 
         <div class="form-actions">
@@ -168,7 +164,6 @@ const newTip = reactive({
   cookingMethod: '',
   direction: '',
   content: '',
-  addedBy: '',
   relatedRecipeId: ''
 })
 
@@ -205,7 +200,7 @@ const onScaledRecipeChange = () => {
 // Form validation
 const isFormValid = computed(() => {
   if (tipGenerationMethod.value === 'manual') {
-    return newTip.content && newTip.addedBy && newTip.cookingMethod && newTip.direction
+    return newTip.content && newTip.cookingMethod && newTip.direction
   } else {
     // For AI generation, both scaled recipe and cooking method must be selected
     return !!newTip.relatedRecipeId && !!newTip.cookingMethod
@@ -217,17 +212,58 @@ const handleAddTip = async () => {
   
   if (tipGenerationMethod.value === 'manual') {
     // Manual tip creation
-    const tip: ScalingTip = {
-      ...newTip,
-      tipId: Date.now().toString(),
-      direction: newTip.direction as 'up' | 'down',
-      relatedRecipeId: newTip.relatedRecipeId || undefined
-    }
+    // Get current user from auth store
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    const currentUsername = authStore.user?.username || 'Unknown'
     
-    // Add to the store
-    recipeStore.tips.push(tip)
-    console.log('Manual tip added to store:', tip)
-    console.log('Total tips in store:', recipeStore.tips.length)
+    try {
+      
+      // Save to backend first
+      const response = await scalingTipsApi.addManualScalingTip({
+        cookingMethod: newTip.cookingMethod,
+        direction: newTip.direction as 'up' | 'down',
+        tipText: newTip.content,
+        addedBy: currentUsername
+      })
+      
+      console.log('Manual tip saved to backend:', response)
+      
+      // Create local tip object
+      const tip: ScalingTip = {
+        tipId: response.tipId || Date.now().toString(),
+        cookingMethod: newTip.cookingMethod,
+        direction: newTip.direction as 'up' | 'down',
+        content: newTip.content,
+        addedBy: currentUsername,
+        relatedRecipeId: newTip.relatedRecipeId || undefined
+      }
+      
+      // Add to the store
+      if (typeof recipeStore.addTip === 'function') {
+        recipeStore.addTip(tip)
+      } else {
+        console.warn('addTip method not available, adding directly to store')
+        recipeStore.tips.push(tip)
+      }
+      console.log('Total tips in store:', recipeStore.tips.length)
+    } catch (error) {
+      console.error('Failed to save manual tip to backend:', error)
+      // Fallback: Add to local store only
+      const tip: ScalingTip = {
+        ...newTip,
+        tipId: Date.now().toString(),
+        direction: newTip.direction as 'up' | 'down',
+        addedBy: currentUsername,
+        relatedRecipeId: newTip.relatedRecipeId || undefined
+      }
+      if (typeof recipeStore.addTip === 'function') {
+        recipeStore.addTip(tip)
+      } else {
+        recipeStore.tips.push(tip)
+      }
+      console.log('Manual tip added to local store only:', tip)
+    }
   } else {
     // AI tip generation
     await generateAITips()
@@ -237,7 +273,6 @@ const handleAddTip = async () => {
   newTip.cookingMethod = ''
   newTip.direction = ''
   newTip.content = ''
-  newTip.addedBy = ''
   newTip.relatedRecipeId = ''
   showAddTipForm.value = false
 }
@@ -245,6 +280,10 @@ const handleAddTip = async () => {
 const generateAITips = async () => {
   try {
     console.log('Generating AI tips...')
+    // Determine current user for attribution
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    const currentUsername = authStore.user?.username || 'Unknown'
     
     // Find the selected scaled recipe if one is chosen
     const selectedScaledRecipe = newTip.relatedRecipeId 
@@ -298,8 +337,8 @@ const generateAITips = async () => {
                 tipId: tipData._id,
                 cookingMethod: tipData.cookingMethod,
                 direction: tipData.direction as 'up' | 'down',
-                content: tipData.text, // Use the actual generated text
-                addedBy: 'AI',
+                content: `[AI] ${tipData.text}`,
+                addedBy: currentUsername,
                 relatedRecipeId: tipData.relatedRecipeId || selectedScaledRecipe._id
               }
               
@@ -318,8 +357,8 @@ const generateAITips = async () => {
                 tipId: tipId,
                 cookingMethod: newTip.cookingMethod,
                 direction: scalingDirection as 'up' | 'down',
-                content: `AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). This tip was generated by AI based on the specific recipe context.`,
-                addedBy: 'AI',
+                content: `[AI] AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). This tip was generated by AI based on the specific recipe context.`,
+                addedBy: currentUsername,
                 relatedRecipeId: selectedScaledRecipe._id
               }
               
@@ -336,7 +375,11 @@ const generateAITips = async () => {
           
           // Add all unique tips to the store
           for (const tip of uniqueTips.values()) {
-            recipeStore.tips.push(tip)
+            if (typeof recipeStore.addTip === 'function') {
+              recipeStore.addTip(tip)
+            } else {
+              recipeStore.tips.push(tip)
+            }
             console.log('Unique AI tip added to store:', tip)
           }
         } else {
@@ -354,12 +397,16 @@ const generateAITips = async () => {
           tipId: `ai-fallback-${Date.now()}`,
           cookingMethod: newTip.cookingMethod,
           direction: scalingDirection as 'up' | 'down',
-          content: `AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). ${scalingAdvice}`,
-          addedBy: 'AI',
+          content: `[AI] AI-generated tip for ${newTip.cookingMethod} when scaling ${scalingDirection} for ${baseRecipe.name} (${baseRecipe.originalServings} → ${selectedScaledRecipe.targetServings} servings). ${scalingAdvice}`,
+          addedBy: currentUsername,
           relatedRecipeId: selectedScaledRecipe._id
         }
         
-        recipeStore.tips.push(fallbackTip)
+        if (typeof recipeStore.addTip === 'function') {
+          recipeStore.addTip(fallbackTip)
+        } else {
+          recipeStore.tips.push(fallbackTip)
+        }
         console.log('Fallback AI tip added to store:', fallbackTip)
       }
     } else {
@@ -376,13 +423,25 @@ const generateAITips = async () => {
 
 const removeTip = async (tipId: string) => {
   if (confirm('Are you sure you want to remove this tip?')) {
-    // Remove from store
-    const index = recipeStore.tips.findIndex(tip => tip.tipId === tipId)
-    if (index > -1) {
-      recipeStore.tips.splice(index, 1)
-      console.log('Tip removed from store:', tipId)
-      console.log('Remaining tips in store:', recipeStore.tips.length)
+    try {
+      // Remove from backend first
+      await scalingTipsApi.removeScalingTip({ tipId })
+      console.log('Tip removed from backend:', tipId)
+    } catch (error) {
+      console.warn('Failed to remove tip from backend:', error)
+      // Continue with local removal even if backend fails
     }
+    
+    // Remove from store
+    if (typeof recipeStore.removeTip === 'function') {
+      recipeStore.removeTip(tipId)
+    } else {
+      const index = recipeStore.tips.findIndex(tip => tip.tipId === tipId)
+      if (index > -1) {
+        recipeStore.tips.splice(index, 1)
+      }
+    }
+    console.log('Remaining tips in store:', recipeStore.tips.length)
   }
 }
 </script>

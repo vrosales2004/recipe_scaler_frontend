@@ -302,6 +302,21 @@ export const useRecipeStore = defineStore('recipe', {
       console.log('Store: All recipe data cleared')
     },
 
+    // Add a tip to the store (used when creating new tips)
+    addTip(tip: ScalingTip) {
+      this.tips.push(tip)
+      console.log('Store: Tip added:', tip)
+    },
+
+    // Remove a tip from the store (used when deleting tips)
+    removeTip(tipId: string) {
+      const index = this.tips.findIndex(tip => tip.tipId === tipId)
+      if (index > -1) {
+        this.tips.splice(index, 1)
+        console.log('Store: Tip removed:', tipId)
+      }
+    },
+
     // Load user-specific data (used when logging in or restoring a session)
     async loadUserData() {
       this.loading = true
@@ -346,7 +361,54 @@ export const useRecipeStore = defineStore('recipe', {
         this.scaledRecipes = allScaled
         console.log('Store: Loaded scaled recipes count:', this.scaledRecipes.length)
 
-        // Optionally, clear tips or leave as-is; for now keep existing tips
+        // 3) Load tips for this user
+        // Since the API doesn't have a "get all tips for user" endpoint,
+        // we'll try to load tips for common cooking methods and directions
+        // and then filter by the current user
+        const cookingMethods = ['baking', 'frying', 'boiling', 'grilling', 'roasting', 'steaming']
+        const directions: ('up' | 'down')[] = ['up', 'down']
+        const allTips: ScalingTip[] = []
+        
+        for (const method of cookingMethods) {
+          for (const direction of directions) {
+            try {
+              const tipsForMethod = await scalingTipsApi.getScalingTips({
+                cookingMethod: method,
+                direction: direction,
+                relatedRecipeId: null // Get general tips, not recipe-specific
+              })
+              if (Array.isArray(tipsForMethod) && tipsForMethod.length > 0) {
+                // Keep only tips authored by the current user, OR AI-generated tips
+                // that are attached to this user's scaled recipes
+                const userScaledIds = new Set(this.scaledRecipes.map(s => s._id))
+                const filteredForUser = tipsForMethod.filter(t =>
+                  (t.addedBy === username) ||
+                  (t.source === 'generated' && t.relatedRecipeId != null && userScaledIds.has(t.relatedRecipeId))
+                )
+
+                // Convert TipDocOutput to ScalingTip format
+                const convertedTips = filteredForUser.map(tip => ({
+                  tipId: tip._id,
+                  cookingMethod: tip.cookingMethod,
+                  direction: tip.direction,
+                  content: tip.text,
+                  addedBy: tip.addedBy || 'Unknown',
+                  relatedRecipeId: tip.relatedRecipeId
+                }))
+                allTips.push(...convertedTips)
+              }
+            } catch (e) {
+              console.warn('Store: Failed to load tips for', method, direction, e)
+            }
+          }
+        }
+        
+        // Remove duplicates based on tipId
+        const uniqueTips = allTips.filter((tip, index, self) => 
+          index === self.findIndex(t => t.tipId === tip.tipId)
+        )
+        this.tips = uniqueTips
+        console.log('Store: Loaded tips count after filtering for user:', this.tips.length)
       } catch (error: any) {
         console.error('Store: Error loading user data:', error)
         this.error = error.message || 'Failed to load user data'
