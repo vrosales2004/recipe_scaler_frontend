@@ -49,7 +49,7 @@ export class ApiClient {
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
+      (error: any) => {
         console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);
       }
@@ -68,7 +68,7 @@ export class ApiClient {
       );
       console.log('API Client: Response received:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('API Client: Error in addRecipe:', error);
       throw error;
     }
@@ -115,7 +115,7 @@ export class ApiClient {
       );
       console.log('API Client: scaleManually response:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('API Client: scaleManually error details:', error);
       if (error.response) {
         console.error('API Client: Error response status:', error.response.status);

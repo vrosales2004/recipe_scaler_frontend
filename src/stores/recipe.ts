@@ -10,7 +10,6 @@ import {
   type AddRecipeRequest,
   type ScaleManuallyRequest,
   type ScaleRecipeAIRequest,
-  type AddManualScalingTipRequest
 } from '@/services/api'
 
 // Re-export types for backward compatibility

@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRecipeStore } from '@/stores/recipe'
-import type { Recipe, Ingredient } from '@/stores/recipe'
+import type { Recipe } from '@/stores/recipe'
 
 interface Props {
   isOpen: boolean

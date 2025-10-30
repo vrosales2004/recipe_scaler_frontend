@@ -4,7 +4,6 @@ import Recipes from '@/views/Recipes.vue'
 import ScaledRecipes from '@/views/ScaledRecipes.vue'
 import Tips from '@/views/Tips.vue'
 import Login from '@/views/Login.vue'
-import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   {

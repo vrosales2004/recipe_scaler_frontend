@@ -121,7 +121,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 // Use computed to avoid deref issues
 const loading = computed(() => authStore.loading)
-const error = computed(() => authStore.error)
 
 const showRegister = ref(false)
 const registerError = ref('')

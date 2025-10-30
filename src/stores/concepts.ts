@@ -7,7 +7,6 @@ import {
   type Recipe,
   type ScaledRecipe,
   type ScalingTip,
-  type IngredientData,
   type AddRecipeRequest,
   type ScaleManuallyRequest,
   type ScaleRecipeAIRequest,
@@ -33,7 +32,7 @@ export const useConceptsStore = defineStore('concepts', () => {
   )
 
   const getScaledRecipeById = computed(() => (id: string) =>
-    scaledRecipes.value.find(scaled => scaled.scaledRecipeId === id)
+    scaledRecipes.value.find(scaled => scaled._id === id)
   )
 
   const getTipsByCookingMethod = computed(() => (method: string) =>
@@ -204,10 +203,9 @@ export const useConceptsStore = defineStore('concepts', () => {
       const newTip: ScalingTip = {
         tipId: response.tipId,
         cookingMethod: tipData.cookingMethod,
-        direction: tipData.direction as 'up' | 'down',
-        content: tipData.content,
-        addedBy: tipData.addedBy,
-        relatedRecipeId: tipData.relatedRecipeId || undefined
+        direction: tipData.direction,
+        content: tipData.tipText,
+        addedBy: tipData.addedBy || 'Unknown'
       }
       
       scalingTips.value.push(newTip)
@@ -227,7 +225,7 @@ export const useConceptsStore = defineStore('concepts', () => {
     
     try {
       const response = await scalingTipsApi.requestTipGeneration(request)
-      return response.generatedTipIds
+      return response.tipIds
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate tips'
       setError(errorMessage)
@@ -272,15 +270,15 @@ export const useConceptsStore = defineStore('concepts', () => {
     // Fetch fresh data for each scaled recipe
     for (const scaled of existingScaled) {
       try {
-        const freshData = await getScaledRecipe(scaled.scaledRecipeId)
+        const freshData = await getScaledRecipe(scaled._id)
         if (freshData) {
-          const index = scaledRecipes.value.findIndex(s => s.scaledRecipeId === scaled.scaledRecipeId)
+          const index = scaledRecipes.value.findIndex(s => s._id === scaled._id)
           if (index !== -1) {
             scaledRecipes.value[index] = freshData
           }
         }
       } catch (err) {
-        console.warn(`Failed to refresh scaled recipe ${scaled.scaledRecipeId}:`, err)
+        console.warn(`Failed to refresh scaled recipe ${scaled._id}:`, err)
       }
     }
   }

@@ -4,9 +4,7 @@ import { useRecipeStore } from './recipe'
 import type { 
   UserLoginRequest, 
   UserRegisterRequest, 
-  UserLoginResponse,
-  UserDocOutput,
-  SessionDocOutput
+  UserLoginResponse
 } from '@/services/api'
 
 export interface AuthUser {
