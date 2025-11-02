@@ -40,17 +40,32 @@ export class ApiClient {
   constructor(baseURL: string = '') {
     this.client = axios.create({
       baseURL,
-      timeout: 10000,
+      timeout: 30000, // Increased to 30 seconds for production
       headers: {
         'Content-Type': 'application/json',
       },
     });
+
+    // Add request interceptor for better logging
+    this.client.interceptors.request.use(
+      (config) => {
+        console.log(`API Client: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        return config;
+      },
+      (error) => {
+        console.error('API Client: Request error:', error);
+        return Promise.reject(error);
+      }
+    );
 
     // Add response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
       (error: any) => {
         console.error('API Error:', error.response?.data || error.message);
+        if (error.code === 'ECONNABORTED') {
+          console.error('API Error: Request timed out after 30 seconds');
+        }
         return Promise.reject(error);
       }
     );
@@ -267,6 +282,8 @@ export class ApiClient {
 // In development, Vite proxy handles the /api routing to localhost:8000
 // In production, use environment variable or default to /api
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+console.log('API Client: Initializing with base URL:', API_BASE);
+console.log('API Client: VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL);
 export const apiClient = new ApiClient(API_BASE);
 
 // Export individual concept clients for better organization

@@ -345,9 +345,9 @@ export const useRecipeStore = defineStore('recipe', {
         }))
         console.log(`Store: Loaded ${this.recipes.length} recipes for`, username)
 
-        // 2) Load scaled recipes for each base recipe
+        // 2) Load scaled recipes for each base recipe in parallel
         const allScaled: ScaledRecipe[] = []
-        for (const r of this.recipes) {
+        const scaledPromises = this.recipes.map(async (r) => {
           try {
             const scaledForBase = await recipeScalerApi.getScaledRecipesByBaseRecipe({ baseRecipeId: r.recipeId })
             if (Array.isArray(scaledForBase) && scaledForBase.length > 0) {
@@ -356,7 +356,8 @@ export const useRecipeStore = defineStore('recipe', {
           } catch (e) {
             console.warn('Store: Failed to load scaled recipes for base', r.recipeId, e)
           }
-        }
+        })
+        await Promise.allSettled(scaledPromises)
         this.scaledRecipes = allScaled
         console.log('Store: Loaded scaled recipes count:', this.scaledRecipes.length)
 
@@ -368,39 +369,48 @@ export const useRecipeStore = defineStore('recipe', {
         const directions: ('up' | 'down')[] = ['up', 'down']
         const allTips: ScalingTip[] = []
         
+        // Create all tip loading promises in parallel
+        const tipPromises: Promise<void>[] = []
         for (const method of cookingMethods) {
           for (const direction of directions) {
-            try {
-              const tipsForMethod = await scalingTipsApi.getScalingTips({
-                cookingMethod: method,
-                direction: direction,
-                relatedRecipeId: null // Get general tips, not recipe-specific
-              })
-              if (Array.isArray(tipsForMethod) && tipsForMethod.length > 0) {
-                // Keep only tips authored by the current user, OR AI-generated tips
-                // that are attached to this user's scaled recipes
-                const userScaledIds = new Set(this.scaledRecipes.map(s => s._id))
-                const filteredForUser = tipsForMethod.filter(t =>
-                  (t.addedBy === username) ||
-                  (t.source === 'generated' && t.relatedRecipeId != null && userScaledIds.has(t.relatedRecipeId))
-                )
+            tipPromises.push(
+              (async () => {
+                try {
+                  const tipsForMethod = await scalingTipsApi.getScalingTips({
+                    cookingMethod: method,
+                    direction: direction,
+                    relatedRecipeId: null // Get general tips, not recipe-specific
+                  })
+                  if (Array.isArray(tipsForMethod) && tipsForMethod.length > 0) {
+                    // Keep only tips authored by the current user, OR AI-generated tips
+                    // that are attached to this user's scaled recipes
+                    const userScaledIds = new Set(this.scaledRecipes.map(s => s._id))
+                    const filteredForUser = tipsForMethod.filter(t =>
+                      (t.addedBy === username) ||
+                      (t.source === 'generated' && t.relatedRecipeId != null && userScaledIds.has(t.relatedRecipeId))
+                    )
 
-                // Convert TipDocOutput to ScalingTip format
-                const convertedTips = filteredForUser.map(tip => ({
-                  tipId: tip._id,
-                  cookingMethod: tip.cookingMethod,
-                  direction: tip.direction,
-                  content: tip.text,
-                  addedBy: tip.addedBy || 'Unknown',
-                  relatedRecipeId: tip.relatedRecipeId
-                }))
-                allTips.push(...convertedTips)
-              }
-            } catch (e) {
-              console.warn('Store: Failed to load tips for', method, direction, e)
-            }
+                    // Convert TipDocOutput to ScalingTip format
+                    const convertedTips = filteredForUser.map(tip => ({
+                      tipId: tip._id,
+                      cookingMethod: tip.cookingMethod,
+                      direction: tip.direction,
+                      content: tip.text,
+                      addedBy: tip.addedBy || 'Unknown',
+                      relatedRecipeId: tip.relatedRecipeId
+                    }))
+                    allTips.push(...convertedTips)
+                  }
+                } catch (e) {
+                  console.warn('Store: Failed to load tips for', method, direction, e)
+                }
+              })()
+            )
           }
         }
+        
+        // Wait for all tip requests to complete (or timeout)
+        await Promise.allSettled(tipPromises)
         
         // Remove duplicates based on tipId
         const uniqueTips = allTips.filter((tip, index, self) => 
