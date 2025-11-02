@@ -85,11 +85,29 @@ The application includes a complete TypeScript API client library generated from
 - **Recipe Scaling**: Manual and AI-powered recipe scaling
 - **Scaling Tips**: Context-aware scaling advice
 
+### Environment Configuration
+
+The API base URL is configurable via environment variables:
+
+1. Create a `.env` file in the project root with:
+```bash
+VITE_API_BASE_URL=
+```
+
+2. **For local development:** Leave `VITE_API_BASE_URL` empty. The application will use `/api` which is proxied to `http://localhost:8000` via Vite's proxy configuration.
+
+3. **For production on Render:** Set `VITE_API_BASE_URL` to your backend URL:
+```bash
+VITE_API_BASE_URL=https://your-backend.onrender.com
+```
+
+**Important:** The `.env` file is gitignored by default. For deployment on Render, configure the environment variable in your Render dashboard under "Environment" settings.
+
 ### CORS Configuration
 
 The application uses Vite's proxy feature to handle CORS issues during development. The proxy configuration in `vite.config.ts` forwards all `/api` requests to `http://localhost:8000`.
 
-For production deployment, ensure your backend server is configured with proper CORS headers or deploy both frontend and backend on the same domain.
+For production deployment, ensure your backend server is configured with proper CORS headers to accept requests from your frontend domain.
 
 ### Usage Example
 

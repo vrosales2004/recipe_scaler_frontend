@@ -265,8 +265,9 @@ export class ApiClient {
 
 // Create and export a default instance
 // In development, Vite proxy handles the /api routing to localhost:8000
-// In production, you would set this to your actual backend URL
-export const apiClient = new ApiClient();
+// In production, use environment variable or default to /api
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+export const apiClient = new ApiClient(API_BASE);
 
 // Export individual concept clients for better organization
 export class RecipeApi {
