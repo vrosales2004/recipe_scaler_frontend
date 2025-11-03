@@ -281,7 +281,7 @@ export class ApiClient {
 // Create and export a default instance
 // In development, Vite proxy handles the /api routing to localhost:8000
 // In production, use environment variable or default to /api
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 console.log('API Client: Initializing with base URL:', API_BASE);
 console.log('API Client: VITE_API_BASE_URL from env:', import.meta.env.VITE_API_BASE_URL);
 export const apiClient = new ApiClient(API_BASE);
