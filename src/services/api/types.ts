@@ -23,6 +23,7 @@ export interface AddRecipeRequest {
   originalServings: number;
   ingredients: IngredientData[];
   cookingMethods: string[];
+  sessionId?: string; // Optional - will be auto-injected by API client if not provided
 }
 
 export interface AddRecipeResponse {
@@ -31,6 +32,7 @@ export interface AddRecipeResponse {
 
 export interface RemoveRecipeRequest {
   recipeId: string;
+  sessionId?: string; // Optional - will be auto-injected by API client if not provided
 }
 
 export interface GetRecipeByIdRequest {
@@ -58,11 +60,13 @@ export interface RecipeDocOutput {
 export interface ScaleManuallyRequest {
   baseRecipeId: string;
   targetServings: number;
+  sessionId?: string; // Optional - will be auto-injected by API client if not provided
 }
 
 export interface ScaleRecipeAIRequest {
   baseRecipeId: string;
   targetServings: number;
+  sessionId?: string; // Optional - will be auto-injected by API client if not provided
 }
 
 export interface ScaleRecipeResponse {

@@ -87,12 +87,12 @@ const scaledRecipeId = await conceptsStore.scaleRecipeAI('recipe123', 12)
 ## API Endpoints
 
 ### Recipe Management
-- `POST /Recipe/addRecipe` - Add a new recipe
-- `POST /Recipe/removeRecipe` - Remove a recipe
+- `POST /Recipe/addRecipe` - Add a new recipe (requires sessionId for authentication)
+- `POST /Recipe/removeRecipe` - Remove a recipe (requires sessionId for authentication)
 
 ### Recipe Scaling
-- `POST /RecipeScaler/scaleManually` - Manual recipe scaling
-- `POST /RecipeScaler/scaleRecipeAI` - AI-powered recipe scaling
+- `POST /RecipeScaler/scaleManually` - Manual recipe scaling (requires sessionId for authentication)
+- `POST /RecipeScaler/scaleRecipeAI` - AI-powered recipe scaling (requires sessionId for authentication)
 - `POST /RecipeScaler/_getScaledRecipe` - Get specific scaled recipe
 - `POST /RecipeScaler/_findScaledRecipe` - Find scaled recipes by criteria
 
@@ -112,12 +112,22 @@ import { apiClient } from '@/services/api'
 apiClient.setBaseURL('https://api.recipescaler.com')
 ```
 
-### Authentication (if needed)
+### Authentication and Session Management
+
+The following endpoints require sessionId for authentication:
+- `POST /Recipe/addRecipe`
+- `POST /Recipe/removeRecipe`
+- `POST /RecipeScaler/scaleManually`
+- `POST /RecipeScaler/scaleRecipeAI`
+
+The API client automatically injects the `sessionId` from the auth store when calling these endpoints. You don't need to manually pass `sessionId` in the request - it will be retrieved automatically from the current user session.
+
+If no session is available, these endpoints will throw an error asking the user to log in.
 
 ```typescript
 import { apiClient } from '@/services/api'
 
-// Set auth token
+// Set auth token (for future use if needed)
 apiClient.setAuthToken('your-jwt-token')
 
 // Remove auth token
@@ -149,7 +159,8 @@ const request: AddRecipeRequest = {
   name: 'string',        // ✅ Required string
   originalServings: 8,   // ✅ Required number
   ingredients: [...],   // ✅ Required IngredientData[]
-  cookingMethods: [...]  // ✅ Required string[]
+  cookingMethods: [...], // ✅ Required string[]
+  sessionId: '...'       // ⚠️ Optional - auto-injected by API client if not provided
 }
 
 // Response types are inferred

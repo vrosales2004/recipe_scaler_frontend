@@ -37,6 +37,18 @@ import type {
 export class ApiClient {
   private client: AxiosInstance;
 
+  // Helper method to get sessionId from auth store
+  private async getSessionId(): Promise<string | null> {
+    try {
+      const { useAuthStore } = await import('@/stores/auth');
+      const authStore = useAuthStore();
+      return authStore.currentSessionId;
+    } catch (error) {
+      console.warn('API Client: Failed to get sessionId from auth store:', error);
+      return null;
+    }
+  }
+
   constructor(baseURL: string = '') {
     this.client = axios.create({
       baseURL,
@@ -73,6 +85,15 @@ export class ApiClient {
 
   // Recipe endpoints
   async addRecipe(request: AddRecipeRequest): Promise<AddRecipeResponse> {
+    // Automatically inject sessionId if not provided
+    if (!request.sessionId) {
+      const sessionId = await this.getSessionId();
+      if (!sessionId) {
+        throw new Error('Session ID is required but not available. Please log in.');
+      }
+      request.sessionId = sessionId;
+    }
+    
     console.log('API Client: Making POST request to /api/Recipe/addRecipe with:', request);
     console.log('API Client: Base URL:', this.client.defaults.baseURL);
     
@@ -90,6 +111,15 @@ export class ApiClient {
   }
 
   async removeRecipe(request: RemoveRecipeRequest): Promise<void> {
+    // Automatically inject sessionId if not provided
+    if (!request.sessionId) {
+      const sessionId = await this.getSessionId();
+      if (!sessionId) {
+        throw new Error('Session ID is required but not available. Please log in.');
+      }
+      request.sessionId = sessionId;
+    }
+    
     await this.client.post('/api/Recipe/removeRecipe', request);
   }
 
@@ -119,6 +149,15 @@ export class ApiClient {
 
   // RecipeScaler endpoints
   async scaleManually(request: ScaleManuallyRequest): Promise<ScaleRecipeResponse> {
+    // Automatically inject sessionId if not provided
+    if (!request.sessionId) {
+      const sessionId = await this.getSessionId();
+      if (!sessionId) {
+        throw new Error('Session ID is required but not available. Please log in.');
+      }
+      request.sessionId = sessionId;
+    }
+    
     console.log('API Client: scaleManually request payload:', request);
     console.log('API Client: baseURL:', this.client.defaults.baseURL);
     console.log('API Client: full URL will be:', this.client.defaults.baseURL + '/api/RecipeScaler/scaleManually');
@@ -146,6 +185,15 @@ export class ApiClient {
   }
 
   async scaleRecipeAI(request: ScaleRecipeAIRequest): Promise<ScaleRecipeResponse> {
+    // Automatically inject sessionId if not provided
+    if (!request.sessionId) {
+      const sessionId = await this.getSessionId();
+      if (!sessionId) {
+        throw new Error('Session ID is required but not available. Please log in.');
+      }
+      request.sessionId = sessionId;
+    }
+    
     const response: AxiosResponse<ScaleRecipeResponse> = await this.client.post(
       '/api/RecipeScaler/scaleRecipeAI',
       request
