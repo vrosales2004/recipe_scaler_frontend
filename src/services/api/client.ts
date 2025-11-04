@@ -11,6 +11,7 @@ import type {
   ScaleRecipeAIRequest,
   ScaleRecipeResponse,
   GetScaledRecipeRequest,
+  RemoveScaledRecipeRequest,
   FindScaledRecipeRequest,
   GetScaledRecipesByBaseRecipeRequest,
   ScaledRecipe,
@@ -209,6 +210,19 @@ export class ApiClient {
     return response.data;
   }
 
+  async removeScaledRecipe(request: RemoveScaledRecipeRequest): Promise<void> {
+    // Automatically inject sessionId if not provided
+    if (!request.sessionId) {
+      const sessionId = await this.getSessionId();
+      if (!sessionId) {
+        throw new Error('Session ID is required but not available. Please log in.');
+      }
+      request.sessionId = sessionId;
+    }
+    
+    await this.client.post('/api/RecipeScaler/removeScaledRecipe', request);
+  }
+
   async findScaledRecipe(request: FindScaledRecipeRequest): Promise<ScaledRecipe[]> {
     const response: AxiosResponse<ScaledRecipe[]> = await this.client.post(
       '/api/RecipeScaler/_findScaledRecipe',
@@ -372,6 +386,10 @@ export class RecipeScalerApi {
 
   async getScaledRecipe(request: GetScaledRecipeRequest): Promise<ScaledRecipe[]> {
     return this.client.getScaledRecipe(request);
+  }
+
+  async removeScaledRecipe(request: RemoveScaledRecipeRequest): Promise<void> {
+    return this.client.removeScaledRecipe(request);
   }
 
   async findScaledRecipe(request: FindScaledRecipeRequest): Promise<ScaledRecipe[]> {

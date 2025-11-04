@@ -292,6 +292,22 @@ export const useRecipeStore = defineStore('recipe', {
       }
     },
 
+    async removeScaledRecipe(scaledRecipeId: string) {
+      this.loading = true
+      this.error = null
+      
+      try {
+        await recipeScalerApi.removeScaledRecipe({ scaledRecipeId })
+        // Remove from local state
+        this.scaledRecipes = this.scaledRecipes.filter(scaled => scaled._id !== scaledRecipeId)
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Failed to remove scaled recipe'
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Clear all data (used when logging out)
     clearAllData() {
       this.recipes = []

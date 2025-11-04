@@ -85,6 +85,11 @@ export interface GetScaledRecipeRequest {
   scaledRecipeId: string;
 }
 
+export interface RemoveScaledRecipeRequest {
+  scaledRecipeId: string;
+  sessionId?: string; // Optional - will be auto-injected by API client if not provided
+}
+
 export interface FindScaledRecipeRequest {
   baseRecipeId: string;
   targetServings: number;

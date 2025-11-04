@@ -93,6 +93,7 @@ const scaledRecipeId = await conceptsStore.scaleRecipeAI('recipe123', 12)
 ### Recipe Scaling
 - `POST /RecipeScaler/scaleManually` - Manual recipe scaling (requires sessionId for authentication)
 - `POST /RecipeScaler/scaleRecipeAI` - AI-powered recipe scaling (requires sessionId for authentication)
+- `POST /RecipeScaler/removeScaledRecipe` - Remove a scaled recipe (requires sessionId for authentication)
 - `POST /RecipeScaler/_getScaledRecipe` - Get specific scaled recipe
 - `POST /RecipeScaler/_findScaledRecipe` - Find scaled recipes by criteria
 
@@ -119,6 +120,7 @@ The following endpoints require sessionId for authentication:
 - `POST /Recipe/removeRecipe`
 - `POST /RecipeScaler/scaleManually`
 - `POST /RecipeScaler/scaleRecipeAI`
+- `POST /RecipeScaler/removeScaledRecipe`
 
 The API client automatically injects the `sessionId` from the auth store when calling these endpoints. You don't need to manually pass `sessionId` in the request - it will be retrieved automatically from the current user session.
 

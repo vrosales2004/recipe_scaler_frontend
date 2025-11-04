@@ -96,17 +96,11 @@ const closeDetailsModal = () => {
 const removeScaledRecipe = async (scaledRecipeId: string) => {
   if (confirm('Are you sure you want to remove this scaled recipe?')) {
     try {
-      // Remove from the store
-      const index = recipeStore.scaledRecipes.findIndex(recipe => recipe._id === scaledRecipeId)
-      if (index > -1) {
-        recipeStore.scaledRecipes.splice(index, 1)
-        console.log('Scaled recipe removed from store:', scaledRecipeId)
-      } else {
-        console.warn('Scaled recipe not found in store:', scaledRecipeId)
-      }
+      await recipeStore.removeScaledRecipe(scaledRecipeId)
+      console.log('Scaled recipe removed:', scaledRecipeId)
     } catch (error) {
       console.error('Error removing scaled recipe:', error)
-      alert('Failed to remove scaled recipe. Please try again.')
+      alert(`Failed to remove scaled recipe: ${recipeStore.error || 'Please try again.'}`)
     }
   }
 }

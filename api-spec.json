@@ -351,6 +351,39 @@
         }
       }
     },
+    "/RecipeScaler/removeScaledRecipe": {
+      "post": {
+        "summary": "Remove a scaled recipe",
+        "description": "Removes a scaled recipe from the system using its unique identifier. Requires the scaled recipe to exist and a valid session.",
+        "operationId": "removeScaledRecipe",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveScaledRecipeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scaled recipe successfully removed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Empty object indicating successful removal."
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
     "/ScalingTips/addManualScalingTip": {
       "post": {
         "summary": "Add a manual scaling tip",
@@ -1077,6 +1110,23 @@
         },
         "required": [
           "baseRecipeId"
+        ]
+      },
+      "RemoveScaledRecipeRequest": {
+        "type": "object",
+        "properties": {
+          "scaledRecipeId": {
+            "type": "string",
+            "description": "The unique identifier of the scaled recipe to be removed."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "The session ID for authentication."
+          }
+        },
+        "required": [
+          "scaledRecipeId",
+          "sessionId"
         ]
       },
       "AddManualScalingTipRequest": {
