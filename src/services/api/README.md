@@ -1,6 +1,6 @@
 # API Service Documentation
 
-This directory contains the complete TypeScript API client library generated from the OpenAPI specification for the Recipe Scaler backend.
+This directory contains the complete TypeScript API client library generated from the OpenAPI specification for the Scale & Savor backend.
 
 ## Structure
 

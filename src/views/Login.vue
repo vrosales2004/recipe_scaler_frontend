@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-container">
       <div class="login-header">
-        <h1>Recipe Scaler</h1>
+        <h1>Scale & Savor</h1>
         <p>Sign in to your account</p>
       </div>
 

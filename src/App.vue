@@ -2,7 +2,7 @@
   <div id="app">
     <nav class="navbar">
       <div class="nav-brand">
-        <h1>Recipe Scaler</h1>
+        <h1>Scale & Savor</h1>
       </div>
       <div class="nav-links">
         <router-link to="/" class="nav-link">Home</router-link>

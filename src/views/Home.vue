@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="hero">
-      <h1>Welcome to Recipe Scaler</h1>
+      <h1>Welcome to Scale & Savor</h1>
       <p class="subtitle">
         Scale your recipes up or down with ease using AI-powered scaling or manual adjustments.
         Get expert tips for perfect results every time.
@@ -45,7 +45,7 @@
 .hero h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #2c3e50; /* Welcome to Recipe Scaler */
+  color: #2c3e50; /* Welcome to Scale & Savor */
 }
 
 .subtitle {
