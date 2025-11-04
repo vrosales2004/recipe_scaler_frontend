@@ -224,14 +224,16 @@ export const useRecipeStore = defineStore('recipe', {
         }
         
         const response = await recipeScalerApi.scaleRecipeAI(request)
+        const scaledRecipeId = response.scaledRecipeId
         
         // Fetch the created scaled recipe to add to our state
         const scaledRecipeData = await recipeScalerApi.getScaledRecipe({ 
-          scaledRecipeId: response.scaledRecipeId 
+          scaledRecipeId 
         })
         
         if (scaledRecipeData.length > 0) {
           this.scaledRecipes.push(scaledRecipeData[0])
+          console.log('Store: Added AI scaled recipe to state:', scaledRecipeData[0])
         } else {
           console.warn('Store: No scaled recipe data returned from getScaledRecipe (AI)')
           console.log('Store: Creating fallback scaled recipe object for AI scaling')
@@ -241,7 +243,7 @@ export const useRecipeStore = defineStore('recipe', {
           if (localRecipe) {
             // Fallback: Create a local scaled recipe object
             const fallbackScaledRecipe: ScaledRecipe = {
-              _id: response.scaledRecipeId,
+              _id: scaledRecipeId,
               baseRecipeId: baseRecipeId,
               targetServings: targetServings,
               scaledIngredients: localRecipe.ingredients.map(ingredient => ({
@@ -254,6 +256,92 @@ export const useRecipeStore = defineStore('recipe', {
             this.scaledRecipes.push(fallbackScaledRecipe)
             console.log('Store: Added fallback AI scaled recipe to state:', fallbackScaledRecipe)
           }
+        }
+        
+        // Wait a moment for the backend sync to generate tips
+        console.log('Store: Waiting for backend sync to generate AI tips...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        // Fetch auto-generated tips related to this scaled recipe
+        try {
+          console.log('Store: Fetching auto-generated tips for scaled recipe:', scaledRecipeId)
+          const baseRecipe = this.recipes.find(r => r.recipeId === baseRecipeId)
+          
+          if (baseRecipe && baseRecipe.cookingMethods.length > 0) {
+            const scalingDirection = targetServings > baseRecipe.originalServings ? 'up' : 'down'
+            const allNewTips: ScalingTip[] = []
+            
+            // Fetch tips for each cooking method in the recipe
+            for (const cookingMethod of baseRecipe.cookingMethods) {
+              try {
+                const tipsForMethod = await scalingTipsApi.getScalingTips({
+                  cookingMethod: cookingMethod,
+                  direction: scalingDirection,
+                  relatedRecipeId: scaledRecipeId // Filter by the scaled recipe ID
+                })
+                
+                console.log(`Store: Found ${tipsForMethod.length} tips for ${cookingMethod} (${scalingDirection})`)
+                
+                // Fetch full tip details and add to store
+                for (const tipDoc of tipsForMethod) {
+                  // Check if tip already exists in store to avoid duplicates
+                  const existingTip = this.tips.find(t => t.tipId === tipDoc._id)
+                  if (!existingTip) {
+                    // Fetch full tip details
+                    try {
+                      const fullTipData = await scalingTipsApi.getScalingTipById({ tipId: tipDoc._id })
+                      
+                      const newTip: ScalingTip = {
+                        tipId: fullTipData._id,
+                        cookingMethod: fullTipData.cookingMethod,
+                        direction: fullTipData.direction,
+                        content: fullTipData.text,
+                        addedBy: fullTipData.addedBy || 'AI',
+                        relatedRecipeId: fullTipData.relatedRecipeId || scaledRecipeId
+                      }
+                      
+                      allNewTips.push(newTip)
+                      console.log('Store: Found new AI-generated tip:', newTip)
+                    } catch (tipError) {
+                      console.warn('Store: Failed to fetch full tip details for:', tipDoc._id, tipError)
+                      // Add tip with available data if full fetch fails
+                      const fallbackTip: ScalingTip = {
+                        tipId: tipDoc._id,
+                        cookingMethod: tipDoc.cookingMethod,
+                        direction: tipDoc.direction,
+                        content: tipDoc.text,
+                        addedBy: tipDoc.addedBy || 'AI',
+                        relatedRecipeId: tipDoc.relatedRecipeId || scaledRecipeId
+                      }
+                      allNewTips.push(fallbackTip)
+                    }
+                  } else {
+                    console.log('Store: Tip already exists in store, skipping:', tipDoc._id)
+                  }
+                }
+              } catch (methodError) {
+                console.warn(`Store: Failed to fetch tips for ${cookingMethod}:`, methodError)
+              }
+            }
+            
+            // Add all new tips to the store
+            if (allNewTips.length > 0) {
+              // Remove duplicates based on tipId
+              const uniqueNewTips = allNewTips.filter((tip, index, self) => 
+                index === self.findIndex(t => t.tipId === tip.tipId)
+              )
+              
+              this.tips.push(...uniqueNewTips)
+              console.log(`Store: Added ${uniqueNewTips.length} auto-generated AI tips to store`)
+            } else {
+              console.log('Store: No new tips found for this scaled recipe')
+            }
+          } else {
+            console.log('Store: Base recipe not found or has no cooking methods, skipping tip fetch')
+          }
+        } catch (tipError) {
+          console.warn('Store: Error fetching auto-generated tips (non-fatal):', tipError)
+          // Don't fail the scaling operation if tip fetching fails
         }
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Failed to scale recipe with AI'
