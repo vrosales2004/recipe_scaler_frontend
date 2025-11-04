@@ -271,52 +271,73 @@ export const useRecipeStore = defineStore('recipe', {
             const scalingDirection = targetServings > baseRecipe.originalServings ? 'up' : 'down'
             const allNewTips: ScalingTip[] = []
             
+            // Get list of existing tip IDs before fetching to identify new ones
+            const existingTipIds = new Set(this.tips.map(t => t.tipId))
+            
             // Fetch tips for each cooking method in the recipe
+            // Try multiple strategies since backend-generated tips might not have relatedRecipeId set
             for (const cookingMethod of baseRecipe.cookingMethods) {
               try {
+                // Strategy 1: Fetch tips without relatedRecipeId filter (gets all tips for this method/direction)
+                // This will include the newly generated tips
                 const tipsForMethod = await scalingTipsApi.getScalingTips({
                   cookingMethod: cookingMethod,
                   direction: scalingDirection,
-                  relatedRecipeId: scaledRecipeId // Filter by the scaled recipe ID
+                  relatedRecipeId: null // Get all tips, not filtered by recipe
                 })
                 
-                console.log(`Store: Found ${tipsForMethod.length} tips for ${cookingMethod} (${scalingDirection})`)
+                console.log(`Store: Found ${tipsForMethod.length} total tips for ${cookingMethod} (${scalingDirection})`)
+                
+                // Filter to only get tips that:
+                // 1. Are AI-generated (source === 'generated') AND
+                // 2. Are related to the base recipe ID (if relatedRecipeId is set) OR
+                // 3. Are newly created (not in our existing tips)
+                const relevantTips = tipsForMethod.filter(tipDoc => {
+                  // Check if it's an AI-generated tip
+                  const isGenerated = tipDoc.source === 'generated'
+                  
+                  // Check if it's related to our recipe context
+                  const relatesToRecipe = !tipDoc.relatedRecipeId || 
+                                         tipDoc.relatedRecipeId === baseRecipeId ||
+                                         tipDoc.relatedRecipeId === scaledRecipeId
+                  
+                  // Check if it's a new tip we haven't seen
+                  const isNewTip = !existingTipIds.has(tipDoc._id)
+                  
+                  return isGenerated && relatesToRecipe && isNewTip
+                })
+                
+                console.log(`Store: Filtered to ${relevantTips.length} relevant new AI-generated tips`)
                 
                 // Fetch full tip details and add to store
-                for (const tipDoc of tipsForMethod) {
-                  // Check if tip already exists in store to avoid duplicates
-                  const existingTip = this.tips.find(t => t.tipId === tipDoc._id)
-                  if (!existingTip) {
-                    // Fetch full tip details
-                    try {
-                      const fullTipData = await scalingTipsApi.getScalingTipById({ tipId: tipDoc._id })
-                      
-                      const newTip: ScalingTip = {
-                        tipId: fullTipData._id,
-                        cookingMethod: fullTipData.cookingMethod,
-                        direction: fullTipData.direction,
-                        content: fullTipData.text,
-                        addedBy: fullTipData.addedBy || 'AI',
-                        relatedRecipeId: fullTipData.relatedRecipeId || scaledRecipeId
-                      }
-                      
-                      allNewTips.push(newTip)
-                      console.log('Store: Found new AI-generated tip:', newTip)
-                    } catch (tipError) {
-                      console.warn('Store: Failed to fetch full tip details for:', tipDoc._id, tipError)
-                      // Add tip with available data if full fetch fails
-                      const fallbackTip: ScalingTip = {
-                        tipId: tipDoc._id,
-                        cookingMethod: tipDoc.cookingMethod,
-                        direction: tipDoc.direction,
-                        content: tipDoc.text,
-                        addedBy: tipDoc.addedBy || 'AI',
-                        relatedRecipeId: tipDoc.relatedRecipeId || scaledRecipeId
-                      }
-                      allNewTips.push(fallbackTip)
+                for (const tipDoc of relevantTips) {
+                  try {
+                    const fullTipData = await scalingTipsApi.getScalingTipById({ tipId: tipDoc._id })
+                    
+                    const newTip: ScalingTip = {
+                      tipId: fullTipData._id,
+                      cookingMethod: fullTipData.cookingMethod,
+                      direction: fullTipData.direction,
+                      content: fullTipData.text,
+                      addedBy: fullTipData.addedBy || 'AI',
+                      relatedRecipeId: fullTipData.relatedRecipeId || scaledRecipeId
                     }
-                  } else {
-                    console.log('Store: Tip already exists in store, skipping:', tipDoc._id)
+                    
+                    allNewTips.push(newTip)
+                    console.log('Store: Found new AI-generated tip:', newTip)
+                  } catch (tipError) {
+                    console.warn('Store: Failed to fetch full tip details for:', tipDoc._id, tipError)
+                    // Add tip with available data if full fetch fails
+                    const fallbackTip: ScalingTip = {
+                      tipId: tipDoc._id,
+                      cookingMethod: tipDoc.cookingMethod,
+                      direction: tipDoc.direction,
+                      content: tipDoc.text,
+                      addedBy: tipDoc.addedBy || 'AI',
+                      relatedRecipeId: tipDoc.relatedRecipeId || scaledRecipeId
+                    }
+                    allNewTips.push(fallbackTip)
+                    console.log('Store: Added tip with partial data:', fallbackTip)
                   }
                 }
               } catch (methodError) {
@@ -333,8 +354,11 @@ export const useRecipeStore = defineStore('recipe', {
               
               this.tips.push(...uniqueNewTips)
               console.log(`Store: Added ${uniqueNewTips.length} auto-generated AI tips to store`)
+              console.log('Store: Tip IDs added:', uniqueNewTips.map(t => t.tipId))
             } else {
               console.log('Store: No new tips found for this scaled recipe')
+              console.log('Store: Existing tip count:', this.tips.length)
+              console.log('Store: Existing tip IDs:', Array.from(existingTipIds))
             }
           } else {
             console.log('Store: Base recipe not found or has no cooking methods, skipping tip fetch')
