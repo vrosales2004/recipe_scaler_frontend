@@ -10,7 +10,7 @@
         <div class="recipe-info">
           <div class="info-row">
             <span class="label">Author:</span>
-            <span class="value">{{ recipe?.author }}</span>
+            <span class="value">{{ displayAuthor }}</span>
           </div>
           <div class="info-row">
             <span class="label">Servings:</span>
@@ -48,6 +48,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import type { Recipe } from '@/stores/recipe'
 
 interface Props {
@@ -66,6 +68,28 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<Emits>()
+const authStore = useAuthStore()
+
+// Helper function to normalize author: if it's the current user's ID, return username instead
+const getDisplayAuthor = (author: string | undefined): string => {
+  if (!author) return 'Unknown'
+  
+  const currentUserId = authStore.user?.id
+  const currentUsername = authStore.user?.username
+  
+  // If author matches current user's ID, return username instead
+  if (currentUserId && author === currentUserId) {
+    return currentUsername || author
+  }
+  
+  // Otherwise return as-is (should be username in most cases)
+  return author
+}
+
+// Computed property for normalized author display
+const displayAuthor = computed(() => {
+  return getDisplayAuthor(props.recipe?.author)
+})
 
 const closeModal = () => {
   emit('close')

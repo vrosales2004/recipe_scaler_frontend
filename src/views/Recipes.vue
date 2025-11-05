@@ -65,7 +65,7 @@
       <div v-else class="recipe-grid">
         <div v-for="recipe in recipes" :key="recipe.recipeId" class="recipe-card">
           <h3>{{ recipe.name }}</h3>
-          <p class="author">By {{ recipe.author }}</p>
+          <p class="author">By {{ getDisplayAuthor(recipe.author) }}</p>
           <p class="servings">{{ recipe.originalServings }} servings</p>
           <div class="cooking-methods">
             <span v-for="method in recipe.cookingMethods" :key="method" class="method-tag">
@@ -102,14 +102,30 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useRecipeStore } from '@/stores/recipe'
+import { useAuthStore } from '@/stores/auth'
 import RecipeScalingModal from '@/components/RecipeScalingModal.vue'
 import RecipeDetailsModal from '@/components/RecipeDetailsModal.vue'
 import type { Recipe, Ingredient } from '@/stores/recipe'
 
 const recipeStore = useRecipeStore()
+const authStore = useAuthStore()
 // Use computed to avoid deref issues
 const recipes = computed(() => recipeStore.recipes)
 const loading = computed(() => recipeStore.loading)
+
+// Helper function to normalize author: if it's the current user's ID, return username instead
+const getDisplayAuthor = (author: string): string => {
+  const currentUserId = authStore.user?.id
+  const currentUsername = authStore.user?.username
+  
+  // If author matches current user's ID, return username instead
+  if (currentUserId && author === currentUserId) {
+    return currentUsername || author
+  }
+  
+  // Otherwise return as-is (should be username in most cases)
+  return author
+}
 
 const showAddForm = ref(false)
 const detailsModalOpen = ref(false)
