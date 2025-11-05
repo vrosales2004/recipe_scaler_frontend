@@ -455,6 +455,7 @@ export const useRecipeStore = defineStore('recipe', {
         const { useAuthStore } = await import('./auth')
         const authStore = useAuthStore()
         const username = authStore.user?.username
+        const userId = authStore.user?.id
         if (!username) {
           console.warn('Store: No username found; skipping load')
           this.clearAllData()
@@ -462,8 +463,34 @@ export const useRecipeStore = defineStore('recipe', {
         }
 
         // 1) Load recipes for this author
-        const recipeDocs = await recipeApi.getRecipesByAuthor({ author: username })
-        this.recipes = (recipeDocs || []).map(doc => ({
+        // Since the author field can be either username or user ID, fetch both
+        const recipePromises: Promise<any>[] = [
+          recipeApi.getRecipesByAuthor({ author: username })
+        ]
+        
+        // Also fetch by user ID if available and different from username
+        if (userId && userId !== username) {
+          recipePromises.push(recipeApi.getRecipesByAuthor({ author: userId }))
+        }
+        
+        const recipeResults = await Promise.allSettled(recipePromises)
+        const allRecipeDocs: any[] = []
+        
+        // Combine results from both queries
+        for (const result of recipeResults) {
+          if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+            allRecipeDocs.push(...result.value)
+          } else if (result.status === 'rejected') {
+            console.warn('Store: Failed to fetch recipes by author:', result.reason)
+          }
+        }
+        
+        // Remove duplicates based on recipeId
+        const uniqueRecipeDocs = allRecipeDocs.filter((doc, index, self) =>
+          index === self.findIndex(d => d._id === doc._id)
+        )
+        
+        this.recipes = (uniqueRecipeDocs || []).map(doc => ({
           recipeId: doc._id,
           author: doc.author,
           name: doc.name,
@@ -471,7 +498,7 @@ export const useRecipeStore = defineStore('recipe', {
           ingredients: doc.ingredients,
           cookingMethods: doc.cookingMethods
         }))
-        console.log(`Store: Loaded ${this.recipes.length} recipes for`, username)
+        console.log(`Store: Loaded ${this.recipes.length} recipes for user (username: ${username}, userId: ${userId || 'N/A'})`)
 
         // 2) Load scaled recipes for each base recipe in parallel
         const allScaled: ScaledRecipe[] = []
@@ -512,9 +539,10 @@ export const useRecipeStore = defineStore('recipe', {
                   if (Array.isArray(tipsForMethod) && tipsForMethod.length > 0) {
                     // Keep only tips authored by the current user, OR AI-generated tips
                     // that are attached to this user's scaled recipes
+                    // Since addedBy can be either username or user ID, check both
                     const userScaledIds = new Set(this.scaledRecipes.map(s => s._id))
                     const filteredForUser = tipsForMethod.filter(t =>
-                      (t.addedBy === username) ||
+                      (t.addedBy === username || t.addedBy === userId) ||
                       (t.source === 'generated' && t.relatedRecipeId != null && userScaledIds.has(t.relatedRecipeId))
                     )
 
