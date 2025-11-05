@@ -6,6 +6,7 @@ A modern Vue.js frontend application for the Scale & Savor API, built with Vite,
 A new user signs up for Scale & Savor and logs in to explore its features. They start by browsing the app's collection of scaling tips and discover AI-generated advice for bread recipes. Intrigued, they add their own family recipe, "Artisan Sourdough Bread," including the ingredients, cooking methods, and original serving size. Instead of manually scaling the recipe, they use the AI scaling feature to adjust the recipe for 3 loaves instead of 1. The AI scales each ingredient quantity while taking into account ingredients that shouldn't be scaled exactly linearly like yeast or salt. The user saves the scaled recipe and views it alongside the original. They also explore AI-generated tips for bread baking, such as "use a Dutch oven for better crust development" and "allow the dough to rest for 30 minutes after mixing for better gluten formation." Impressed by the AI's insights, they add their own tip about using a steam tray in the oven for a crispier crust. Finally, the user logs out, confident that their recipes and tips are securely saved for the next time they want to bake some sourdough!
 
 [Video of User Journey](./RecipeScalerFinal.mov)
+[Trace of Actions](./User_Journey_Logs.pdf)
 
 ## Visual Design Study
 [Click Here](./Visual_Design_Study.pdf)
